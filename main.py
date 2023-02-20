@@ -24,11 +24,6 @@ class App(customtkinter.CTk):
         customtkinter.set_default_color_theme("dark-blue")
         self.geometry(f"{500}x{300}")
 
-        # configure grid layout (4x4)
-        #self.grid_columnconfigure(1, weight=1)
-        #self.grid_columnconfigure((2, 3), weight=0)
-        #self.grid_rowconfigure((0, 1, 2), weight=1)
-
         self.button_download = customtkinter.CTkButton(self, text="Загрузить данные 1с", command=self.button_download,hover_color="#c93c20")
         self.button_download.grid(row=0, column=0, padx=10, pady=(25, 0))
 
@@ -60,11 +55,20 @@ class App(customtkinter.CTk):
         self.button_to_next = customtkinter.CTkButton(self, text="Следующий", command=lambda: self.var_next.set(1), hover_color="#c93c20")
         self.button_to_next.grid(row=3, column=2, padx=10, pady=(25, 0))
 
+        self.add = customtkinter.CTkEntry(self,placeholder_text="Наименование")
+        self.add.grid(row=4, column=0, padx=10, pady=(25, 0))
+
+        self.add_count = customtkinter.CTkEntry(self, width=55,placeholder_text="кол-во")
+        self.add_count.grid(row=4, column=1, padx=10, pady=(25, 0))
+
+        self.button_add = customtkinter.CTkButton(self, text="Поиск товара", command=self.button_add, hover_color="#c93c20")
+        self.button_add.grid(row=4, column=2, padx=10, pady=(25, 0))
+
         self.city = customtkinter.CTkEntry(self)
-        self.city.grid(row=6, column=0, padx=10, pady=(25, 0))
+        self.city.grid(row=5, column=0, padx=10, pady=(25, 0))
 
         self.button_save = customtkinter.CTkButton(self, text="Сохранить", command=self.button_save, hover_color="#c93c20")
-        self.button_save.grid(row=6, column=1, padx=10, pady=(25, 0))
+        self.button_save.grid(row=5, column=1, padx=10, pady=(25, 0))
 
 
     def button_download(self):
@@ -143,6 +147,42 @@ class App(customtkinter.CTk):
         self.label_num_post.configure(text="Конец")
         self.label_count.configure(text="Конец")
 
+    def button_add(self):
+        max = 0.4
+        self.add_tovar = []
+        self.tovar = self.add.get()
+        self.tovar_count = self.add_count.get()
+        for row in self.sheet.iter_rows(values_only=True):
+            if (sim(self.tovar, str(row[0])) > max):
+                max = sim(self.tovar, str(row[0]))
+                try:
+                    self.add_tovar = [self.tovar, row[0], sim(self.tovar, str(row[0])), str(row[8]).split('*')[1], self.tovar_count]
+                except:
+                    self.add_tovar = ["Не найденно", "Не найденно", "Не найденно", "Не найденно", "Не найденно"]
+
+
+        if(len(self.add_tovar) == 0):
+            self.label_num_1c.configure(text="Пусто")
+            self.label_num_post.configure(text="Пусто")
+            self.label_count.configure(text="Пусто")
+        else:
+            self.label_num_1c.configure(text=self.add_tovar[0])
+            self.label_num_post.configure(text=self.add_tovar[1])
+            self.label_count.configure(text=str(self.add_tovar[4]))
+            self.wait_variable(self.var_next)
+            if (self.var_continue.get() == 1):
+                self.sheet[self.add_tovar[3]].value = self.add_tovar[4]
+                self.var_continue.set(0)
+                print(f"Записал")
+            if (self.var_break.get() == 1):
+                print(f"Не записал")
+                self.var_break.set(0)
+
+            self.label_num_1c.configure(text="Конец")
+            self.label_num_post.configure(text="Конец")
+            self.label_count.configure(text="Конец")
+
+
     def option_menu(self,value):
         self.choice = value
         print(self.choice)
@@ -157,71 +197,3 @@ class App(customtkinter.CTk):
 if __name__ == "__main__":
     app = App()
     app.mainloop()
-
-
-
-
-# exel = []
-#
-#
-#
-# wb = openpyxl.load_workbook(filename='MVA.xlsx')
-# sheet = wb["Прайс-Лист"]
-#
-#
-#
-# max = 60
-# max_value = []
-#
-#
-# citys = ["Уфа"]
-# matrix = []
-# matrix2 =[]
-# for city in citys:
-#     #качаю ексель таблицу с данными
-#     wb1 = openpyxl.load_workbook(filename='Красноярск.xlsx')
-#     sheet1 = wb1.active
-#     for row in sheet1.iter_rows(min_row=13,values_only=True):
-#         rowlist = list(row)
-#         if (rowlist[13] == None):
-#             rowlist[13] = 0.0
-#         if (rowlist[14] == None):
-#             rowlist[14] = 0.0
-#         if (rowlist[15] == None):
-#             rowlist[15] = 0.0
-#         if (rowlist[13] >=1000):
-#             rowlist[13] = rowlist[13]/1000
-#         if (rowlist[14] >=1000):
-#             rowlist[14] = rowlist[14]/1000
-#         if (rowlist[15] >=1000):
-#             rowlist[15] = rowlist[15]/1000
-#         if(rowlist[14] + rowlist[15]<rowlist[13]+3):
-#             need_to_buy = rowlist[13] - rowlist[14] - rowlist[15] + 2
-#             matrix.append([rowlist[0], need_to_buy])
-#
-#
-# for nom in matrix:
-#     for row in sheet.iter_rows(values_only=True):
-#         if (sim(nom[0],str(row[0])) > max):
-#             max = sim(nom[0],str(row[0]))
-#             try:
-#                 max_value = [str(nom[0]),row[0], sim(nom[0],str(row[0])) , str(row[8]).split('*')[1]]
-#             except:
-#                 max_value = [str(nom[0]),row[0], sim(nom[0],str(row[0])) , "0"]
-#         if (str(row[0]) == "Процессор Intel Celeron G4930 Soc-1151v2 (3.2GHz/iUHDG610) OEM") :
-#             if max_value != '':
-#                 matrix2.append([max_value])
-#             max_value = ""
-#             max = 60
-#             break
-#
-# for i in matrix2:
-#     print(i)
-#     a = input()
-#     if(a == "1"):
-#         sheet[i[0][3]].value = 5
-#         print(f"Записал")
-#     if (a == "0"):
-#         print(f"Не записал")
-
-#wb.save('balances.xlsx')
